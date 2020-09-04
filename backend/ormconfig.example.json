@@ -1,0 +1,14 @@
+{
+  "type": "postgres",
+  "host": "localhost",
+  "port": "",
+  "username": "postgres",
+  "password": "",
+  "database": "activity_tracker",
+  "synchronize": false,
+  "migrationsRun": true,
+  "entities": ["dist/**/*.entity{ .ts,.js}"],
+  "migrations": [
+    "dist/migrations/*{.ts,.js}"
+  ]
+}
