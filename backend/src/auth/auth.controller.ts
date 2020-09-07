@@ -7,10 +7,4 @@ import { AuthService } from "./auth.service";
 export class AuthController {
   constructor(private EntityManager: EntityManager, private AuthService: AuthService) {
   }
-
-  @Post("test")
-  @UseGuards(AuthGuard('jwt'))
-  async test(@Request() req) {
-    return req.user;
-  }
 }
