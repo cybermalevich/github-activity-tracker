@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryColumn, ManyToOne, JoinColumn, PrimaryGeneratedColumn } from "typeorm";
+import { Entity, Column, ManyToOne, JoinColumn, PrimaryGeneratedColumn } from "typeorm";
 import { Rep } from "./rep.entity";
 import { User } from "./user.entity";
 
@@ -16,8 +16,11 @@ export class UserEvent {
   @Column({ type: "jsonb" })
   payload: string;
 
-  @Column({ type: "date" })
-  created_at: string;
+  @Column({ nullable: true })
+  user_id: string;
+
+  @Column({ nullable: true })
+  rep_id: number;
 
   @ManyToOne(type => User, user => user.userEvents)
   @JoinColumn({ name: "user_id" })

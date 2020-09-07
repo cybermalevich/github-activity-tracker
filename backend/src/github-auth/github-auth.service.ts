@@ -1,33 +1,46 @@
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
-import getRandomString from "../utils/getRandomString";
 import axios from "axios";
 import { EntityManager } from "typeorm";
-import { User } from "../entities/user.entity";
 import { ConfigService } from "@nestjs/config";
+import { AuthService } from "../auth/auth.service";
+import { User } from "../entities/user.entity";
 import { Rep } from "../entities/rep.entity";
 import { UserEvent } from "../entities/user_events.entity";
+import generateUrl from "../utils/generateUrl";
+import { RepUser } from "../entities/rep_user.entity";
 
 @Injectable()
 export class GithubAuthService {
+  clientId: number;
+
+  clientSecret: string;
+
   constructor(private EntityManager: EntityManager,
-              private ConfigService: ConfigService) {
+              private ConfigService: ConfigService,
+              private AuthService: AuthService) {
+    this.clientId = this.ConfigService.get("GITHUB_CLIENT_ID");
+    this.clientSecret = this.ConfigService.get("GITHUB_CLIENT_SECRET");
   }
 
-  async requestAccessToken(code: string): Promise<string | null> {
-    const res = await axios.post(this.ConfigService.get("GET_ACCESS_TOKEN_URL"), {
-      code,
-      client_id: this.ConfigService.get("CLIENT_ID"),
-      client_secret: this.ConfigService.get("CLIENT_SECRET")
-    });
+  async requestAccessToken(code: string): Promise<string> {
+    try {
+      const res = await axios.post(this.ConfigService.get("GET_ACCESS_TOKEN_URL"), {
+        code,
+        client_id: this.clientId,
+        client_secret: this.clientSecret
+      });
 
-    return res.status === 200 ? new URLSearchParams(res.data).get("access_token") : null;
+      return new URLSearchParams(res.data).get("access_token");
+    } catch (error) {
+      throw new HttpException("Wrong code", HttpStatus.UNAUTHORIZED);
+    }
   }
 
-  async saveUser(githubAccessToken: string): Promise<HttpException | string> {
+  async saveUser(githubAccessToken: string): Promise<HttpException | User> {
     let result;
 
     try {
-      result = await axios.get(this.ConfigService.get("GITHUB_API_USER"), {
+      result = await axios.get(this.ConfigService.get("GITHUB_API_AUTHENTICATED_USER"), {
         headers: {
           "Authorization": `token ${githubAccessToken}`
         }
@@ -40,10 +53,14 @@ export class GithubAuthService {
       }
     }
 
-    const { data: { id: githubId, ...data } } = result;
-    const { login } = data;
-    const accessToken = getRandomString(40);
-    const profileUrl = this.ConfigService.get("GITHUB_USER_PROFILE_URL").replace("{USERNAME}", login);
+    const { data: { id: githubId, login, ...data } } = result;
+    const { access_token: accessToken } = await this.AuthService.login({
+      username: login,
+      githubId: githubId,
+    });
+    const profileUrl = generateUrl(this.ConfigService.get("GITHUB_USER_PROFILE_URL"), {
+      USERNAME: login
+    });
 
     const user = this.EntityManager.create(User, {
       ...data,
@@ -56,78 +73,114 @@ export class GithubAuthService {
 
     await this.EntityManager.save(user);
 
-    return user.id;
+    return user;
   }
 
-  async populateUserReps(userId: string): Promise<void> {
+  async populateUserReps(userId: string): Promise<Rep[]> {
     const user = await this.EntityManager.findOne(User, {
       id: userId
     });
+    const userReps = user.reps.reduce((acc, el) => {
+      acc[el.github_id] = el;
+      return acc;
+    }, {});
 
-    const { data } = await axios(this.ConfigService.get("GITHUB_API_USER_EVENTS")
-      .replace("{USERNAME}", user.id));
+    const userRepsForInsert: Rep[] = [];
+    const githubApiUserEventsUrl = generateUrl(this.ConfigService.get("GITHUB_API_USER_EVENTS"), {
+      USERNAME: userId
+    });
 
+    const { data } = await axios(githubApiUserEventsUrl);
     if (data instanceof Array) {
-      interface INameObjRepMap {
-        [key: string]: Rep;
-      }
-
-      const nameObjRepMap: INameObjRepMap = {};
-      const userEvents: UserEvent[] = [];
-
       for (const {
-        id: githubId,
-        type,
-        payload,
-        created_at,
-        repo: { id: repoId, name }
+        repo: { id: repoId, name: repoName },
       } of data) {
-
-        if (!nameObjRepMap[repoId]) {
-          const repUrl = `${this.ConfigService.get("GITHUB_URL")}/${name}`;
+        if (!userReps[repoId]) {
           const rep = this.EntityManager.create(Rep, {
-            name,
             github_id: repoId,
-            url: repUrl
+            name: repoName,
+            url: generateUrl(this.ConfigService.get("GITHUB_REPOSITORY_URL"), {
+              REPO_FULL_NAME: repoName
+            })
           });
-
-          const existingRep = await this.EntityManager.findOne(Rep, {
-            github_id: repoId
-          });
-
-          if (!existingRep) {
-            await this.EntityManager.insert(Rep, rep);
-            user.reps.push(rep);
-          }
-
-          nameObjRepMap[repoId] = rep;
-        }
-
-        userEvents.push(this.EntityManager.create(UserEvent, {
-          github_id: githubId,
-          type,
-          payload: payload,
-          created_at,
-          user,
-          rep: nameObjRepMap[repoId]
-        }));
-      }
-
-      for (let userEvent of userEvents) {
-        const { github_id } = userEvent;
-        const existingUserEvent = await this.EntityManager.findOne(UserEvent, {
-          github_id
-        });
-
-        if (!existingUserEvent) {
-          await this.EntityManager.save(UserEvent, userEvent);
+          rep.userEvents = [];
+          userReps[repoId] = rep;
+          user.reps.push(userReps[repoId]);
+          userRepsForInsert.push(rep);
         }
       }
-
-      await this.EntityManager.save(user);
     }
+
+    await this.EntityManager.save(Rep, userRepsForInsert);
+    await this.EntityManager.save(user);
+
+    return userRepsForInsert;
   }
 
-  async populateRepsCommits() {
+  async populateRepsEvents(reps: Rep[]): Promise<void> {
+    const userEvents = (await this.EntityManager.find(UserEvent)).reduce((acc, el) => {
+      acc[el.github_id] = el;
+      return acc;
+    }, {});
+    const users = (await this.EntityManager.find(User)).reduce((acc, el) => {
+      acc[el.github_id] = el;
+      return acc;
+    }, {});
+
+    for (const rep of reps) {
+      rep.users = [];
+      const { name: repName } = rep;
+      const githubApiRepoEvents = generateUrl(this.ConfigService.get("GITHUB_API_REPO_EVENTS"), {
+        REPO_FULL_NAME: repName
+      });
+      const { data } = await axios(githubApiRepoEvents);
+
+      for (const {
+        id: userEventId,
+        type,
+        payload,
+        repo: { id: repoId, },
+        actor: { id: userId, login },
+      } of data) {
+        if (!users[userId]) {
+          const githubApiUserUrl = generateUrl(this.ConfigService.get("GITHUB_API_USER"), {
+            USERNAME: login
+          });
+          const { data } = await axios.get(githubApiUserUrl);
+          const { name: userName, avatar_url } = data;
+          const user = this.EntityManager.create(User, {
+            id: login,
+            github_id: userId,
+            name: userName,
+            avatar_url,
+            profile_url: generateUrl(this.ConfigService.get("GITHUB_USER_PROFILE_URL"), {
+              USERNAME: login
+            })
+          });
+
+          users[userId] = user;
+          user.userEvents = [];
+          rep.users.push(user);
+        }
+
+        if (!userEvents[repoId]) {
+          const userEvent = this.EntityManager.create(UserEvent, {
+            type,
+            payload,
+            github_id: userEventId,
+            rep_id: rep.id
+          });
+
+          userEvents[userEventId] = userEvent;
+          users[userId].userEvents.push(userEvent);
+          rep.userEvents.push(userEvent);
+        }
+      }
+
+      const eventsForSave = Object.values(userEvents);
+      const usersForSave = Object.values(users);
+      await this.EntityManager.save(eventsForSave);
+      await this.EntityManager.save(usersForSave);
+    }
   }
 }

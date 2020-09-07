@@ -1,6 +1,7 @@
-import { Entity, Column, PrimaryColumn, OneToMany, PrimaryGeneratedColumn, ManyToMany } from "typeorm";
+import { Entity, Column, OneToMany, PrimaryGeneratedColumn, ManyToMany, JoinColumn } from "typeorm";
 import { UserEvent } from "./user_events.entity";
 import { User } from "./user.entity";
+import { RepUser } from "./rep_user.entity";
 
 @Entity("reps")
 export class Rep {
@@ -17,6 +18,11 @@ export class Rep {
     length: 2000
   })
   url: string;
+
+  @OneToMany(type => RepUser, repUser => repUser.rep, {
+    eager: true
+  })
+  repsUsers: RepUser[];
 
   @OneToMany(type => UserEvent, userEvent => userEvent.rep)
   userEvents: UserEvent[];

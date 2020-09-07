@@ -3,10 +3,11 @@ import {
   Column,
   ManyToMany,
   JoinTable,
-  PrimaryColumn, JoinColumn, OneToMany, PrimaryGeneratedColumn
+  PrimaryColumn, OneToMany
 } from "typeorm";
 import { Rep } from "./rep.entity";
 import { UserEvent } from "./user_events.entity";
+import { RepUser } from "./rep_user.entity";
 
 @Entity("users")
 export class User {
@@ -16,14 +17,14 @@ export class User {
   @Column({ type: "bigint", unique: true })
   github_id: number;
 
-  @Column()
+  @Column({ nullable: true })
   name: string;
 
-  @Column()
-  access_token: string;
-
-  @Column()
+  @Column({ nullable: true })
   github_access_token: string;
+
+  @Column({ nullable: true })
+  access_token: string;
 
   @Column({
     unique: true,
@@ -38,13 +39,16 @@ export class User {
   })
   avatar_url: string;
 
+  @OneToMany(type => RepUser, repUser => repUser.user)
+  repsUsers: RepUser[];
+
   @OneToMany(type => UserEvent, userEvent => userEvent.user, {
-    eager: true,
+    eager: true
   })
   userEvents: UserEvent[];
 
   @ManyToMany(type => Rep, rep => rep.users, {
-    eager: true,
+    eager: true
   })
   @JoinTable({
     name: "reps_users",
