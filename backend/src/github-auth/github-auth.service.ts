@@ -155,12 +155,13 @@ export class GithubAuthService {
             avatar_url,
             profile_url: generateUrl(this.ConfigService.get("GITHUB_USER_PROFILE_URL"), {
               USERNAME: login
-            })
+            }),
           });
 
           users[userId] = user;
           user.userEvents = [];
-          rep.users.push(user);
+          user.reps = [];
+          user.reps.push(rep);
         }
 
         if (!userEvents[repoId]) {
