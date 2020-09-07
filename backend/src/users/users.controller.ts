@@ -1,16 +1,37 @@
-import {Body, Controller, Get, Post} from '@nestjs/common';
-import {CreateUserDto} from 'src/users/dto/create-user.dto';
-import {UsersService} from "./users.service";
-import {getManager} from "typeorm";
-import {User} from "../entities/user.entity";
+import { Body, Request, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
+import { UsersService } from "./users.service";
+import { EntityManager } from "typeorm";
+import { User } from "../entities/user.entity";
+import { UserEvent } from "../entities/user_events.entity";
+import { AuthGuard } from "@nestjs/passport";
 
-@Controller('users')
+@Controller("users")
 export class UsersController {
-    constructor(private UsersService: UsersService) { }
+  constructor(private UsersService: UsersService, private EntityManager: EntityManager) {
+  }
 
-    @Post('create')
-    async create(@Body() body: CreateUserDto) {
-        const entityManager = getManager();
-        await entityManager.insert(User, body);
-    }
+  @UseGuards(AuthGuard("jwt"))
+  @Get("/reps")
+  async getRepsWithUserActivity(@Request() req) {
+    const userId = req.user.username;
+    const user = await this.EntityManager.findOne(User, {
+      where: {
+        id: userId
+      }
+    });
+
+    return user.reps;
+  }
+
+  @UseGuards(AuthGuard("jwt"))
+  @Get("/activity")
+  async getUserActivity(@Request() req) {
+    const userId = req.user.username;
+
+    return await this.EntityManager.find(UserEvent, {
+      where: {
+        user_id: userId
+      }
+    });
+  }
 }
