@@ -13,12 +13,13 @@ import { GithubDataFetchingModule } from './github-data-fetching/github-data-fet
 import { RepEventsModule } from './rep-events/rep-events.module';
 import { CreationalJobsModule } from "./creational-jobs/creational-jobs.module";
 import { CreationalJobsController } from "./creational-jobs/creational-jobs.controller";
+import { ScheduleModule } from "@nestjs/schedule";
 
 @Module({
   imports: [TypeOrmModule.forRoot(), UsersModule, ConfigModule.forRoot({
     isGlobal: true,
     expandVariables: true,
-  }), RepsModule, AuthModule, GithubDataFetchingModule, RepEventsModule, CreationalJobsModule],
+  }), RepsModule, AuthModule, GithubDataFetchingModule, RepEventsModule, CreationalJobsModule, ScheduleModule.forRoot()],
   controllers: [AppController, UsersController, RepsController, AuthController, CreationalJobsController ],
   providers: [AppService],
 })
