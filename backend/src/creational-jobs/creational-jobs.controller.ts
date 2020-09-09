@@ -14,8 +14,12 @@ export class CreationalJobsController {
   @Get("after_auth")
   async after_auth(@Query("code") code, @Res() res: Response) {
     const accessToken = await this.GithubDataFetchingService.requestAccessToken(code);
-    await this.CreationalJobsService.fetchAndSaveGithubUserData(accessToken);
-    res.cookie("access_token", accessToken);
+    console.log(accessToken);
+
+    if (typeof accessToken === "string") {
+      await this.CreationalJobsService.fetchAndSaveGithubUserData(accessToken);
+      res.cookie("access_token", accessToken);
+    }
 
     res.sendStatus(200);
   }
