@@ -29,5 +29,6 @@ export default function useFetchData(initialConfig: AxiosRequestConfig) {
         fetchData();
     }, [config.url, config.method, config.data]);
 
+    console.log({data, isLoading, isError}, setConfig);
     return [{data, isLoading, isError}, setConfig] as const;
 }

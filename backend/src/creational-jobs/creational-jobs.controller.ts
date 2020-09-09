@@ -3,7 +3,7 @@ import { Response } from "express";
 import { CreationalJobsService } from "./creational-jobs.service";
 import { GithubDataFetchingService } from "../github-data-fetching/github-data-fetching.service";
 
-@Controller("github-auth")
+@Controller()
 export class CreationalJobsController {
   constructor(
     private GithubDataFetchingService: GithubDataFetchingService,

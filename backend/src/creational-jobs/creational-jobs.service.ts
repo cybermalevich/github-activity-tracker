@@ -31,7 +31,7 @@ export class CreationalJobsService {
     }
   }
 
-  @Cron(CronExpression.EVERY_5_SECONDS)
+  @Cron(CronExpression.EVERY_HOUR)
   async updateGithubDataForAllAuthorizedUsers(): Promise<void> {
     const authorizedUsers: User[] = await this.EntityManager.find(User, {
       where: {
