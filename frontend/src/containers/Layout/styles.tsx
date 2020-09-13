@@ -14,6 +14,10 @@ const useStyles = makeStyles((theme) => ({
   },
   container: {
     height: "100%"
+  },
+  large: {
+    cursor: "pointer",
+    marginRight: theme.spacing(5)
   }
 }));
 

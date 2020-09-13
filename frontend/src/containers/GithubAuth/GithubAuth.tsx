@@ -1,37 +1,53 @@
-import React from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Fab, Typography } from "@material-ui/core";
 import { Github as GithubIcon } from "@icons-pack/react-simple-icons";
 import { Paper, Grid } from "@material-ui/core";
-import axios from 'axios';
 
 import useStyles from "./styles";
-import { useLocation } from "react-router";
+import { useHistory, useLocation } from "react-router";
+import useFetchData from "../../utils/hooks/useFetchData";
+import { useCookies } from "react-cookie";
+import Context from "../../context/Context";
 
 const githubOauthUrl = process.env.REACT_APP_GITHUB_OAUTH_URL;
-const afterAuthApiEndpoint = process.env.REACT_APP_API_AFTER_AUTH;
+const afterAuthApiUrl = process.env.REACT_APP_API_AFTER_AUTH;
 
-const GithubAuth: React.FC = () => {
+interface IReceivedData {
+  access_token: string;
+}
+
+interface IProps {
+  setUserAuth: (userAuthorized: boolean) => void;
+}
+
+const GithubAuth: React.FC<IProps> = ({ setUserAuth }: IProps) => {
+  const { handleSettingAccessToken, handleSettingLoading } = useContext(Context);
+  const history = useHistory();
   const location = useLocation();
+  const [cookies, setCookie] = useCookies();
   const searchParams = new URLSearchParams(location.search);
-  console.log(searchParams.get('code'));
   const authCode = searchParams.get("code");
   const classes = useStyles();
   const emodjiStr = String.fromCodePoint(128578);
   const greeting = `Hi! ${emodjiStr}`;
+  const [{ data, isLoading, isError }, setConfig] = useFetchData<IReceivedData>({
+    method: "GET",
+    params: {
+      code: authCode
+    },
+    url: afterAuthApiUrl
+  });
 
-  if (authCode) {
-    axios({
-      method: "GET",
-      params: {
-        code: authCode
-      },
-      url: afterAuthApiEndpoint
-    }).then(data => {
-      console.log(data);
-    });
-  }
-
-  // console.log(data, isLoading, isError);
+  useEffect(function checkAuthData() {
+    if (data) {
+      const { access_token: accessToken } = data;
+      handleSettingLoading(true);
+      handleSettingAccessToken(accessToken);
+      setCookie("access_token", accessToken);
+      setUserAuth(true);
+      history.replace("/reps");
+    }
+  });
 
   return (
     <Grid
@@ -41,6 +57,7 @@ const GithubAuth: React.FC = () => {
       justify="center"
       alignItems="center"
     >
+      {isError && <Typography variant="h5">The authorization error has occurred</Typography>}
       <Grid item xs={6} md={3}>
         <Paper className={classes.paper} elevation={2}>
           <div className={classes.content}>

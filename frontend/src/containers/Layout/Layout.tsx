@@ -1,22 +1,36 @@
-import React from "react";
-import { AppBar, Button, Container, CssBaseline, IconButton, Toolbar, Typography } from "@material-ui/core";
+import React, { useContext, useState } from "react";
+import {
+  AppBar,
+  Avatar,
+  Button,
+  Container,
+  CssBaseline,
+  IconButton,
+  Menu, MenuItem,
+  Toolbar,
+  Typography
+} from "@material-ui/core";
 import { ThemeProvider } from "@material-ui/core/styles";
 import MenuIcon from "@material-ui/icons/Menu";
 
 import useStyles from "./styles";
 import theme from "../../theme/theme";
+import Context from "../../context/Context";
+import HeaderUserAvatar from "../../components/HeaderUserAvatar/HeaderUserAvatar";
 
 interface IProps {
-  children: React.ReactChild
+  children: any
 }
 
-const Layout: React.FC<IProps> = ({ children }) => {
+const Layout: React.FC<IProps> = ({ children }: IProps) => {
   const classes = useStyles();
+  const { isAuthorized } = useContext(Context);
 
   return (
     <ThemeProvider theme={theme}>
       <div className={classes.root}>
         <CssBaseline/>
+
         <AppBar position="fixed">
           <Toolbar>
             <IconButton edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
@@ -25,7 +39,10 @@ const Layout: React.FC<IProps> = ({ children }) => {
             <Typography variant="h6" className={classes.title}>
               Github Activity Tracker
             </Typography>
-            <Button color="inherit">Help</Button>
+            {!isAuthorized && <Button color="inherit">Help</Button>}
+            {isAuthorized && (
+              <HeaderUserAvatar/>
+            )}
           </Toolbar>
         </AppBar>
         <Container className={classes.container}>
@@ -33,7 +50,6 @@ const Layout: React.FC<IProps> = ({ children }) => {
         </Container>
       </div>
     </ThemeProvider>
-
   );
 };
 
