@@ -20,15 +20,14 @@ export class CreationalJobsService {
   ) {
   }
 
-  async fetchAndSaveGithubUserData(accessToken: string) {
+  async fetchAndSaveGithubUserData(accessToken: string): Promise<string> {
     const userData = await this.GithubDataFetchingService.getUserDataByAccessToken(accessToken);
     const user = await this.UsersService.createAndSaveUser(userData);
+    const reps = await this.GithubDataFetchingService.getRepsWithUserActivity(user.id);
+    const insertedReps = await this.RepsService.populateUserReps(user.id, reps);
+    await this.RepEventsService.populateRepsEvents(insertedReps);
 
-    if (user instanceof User) {
-      const reps = await this.GithubDataFetchingService.getRepsWithUserActivity(user.id);
-      const insertedReps = await this.RepsService.populateUserReps(user.id, reps);
-      await this.RepEventsService.populateRepsEvents(insertedReps);
-    }
+    return user.access_token;
   }
 
   @Cron(CronExpression.EVERY_HOUR)
@@ -43,6 +42,6 @@ export class CreationalJobsService {
       await this.fetchAndSaveGithubUserData(user.github_access_token);
     }
 
-    this.logger.debug('Update github user data task has been run successfully.');
+    this.logger.debug("Update github user data task has been run successfully.");
   }
 }

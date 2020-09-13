@@ -13,7 +13,7 @@ export class RepEventsService {
   constructor(
     private EntityManager: EntityManager,
     private GithubDataFetchingService: GithubDataFetchingService,
-    private ConfigService: ConfigService,
+    private ConfigService: ConfigService
   ) {
   }
 
@@ -39,6 +39,7 @@ export class RepEventsService {
         payload,
         repo: { id: repoId, },
         actor: { id: userId, login },
+        created_at: createdAt
       } of data) {
         if (!users[userId]) {
           const githubApiUserUrl = generateUrl(this.ConfigService.get("GITHUB_API_USER"), {
@@ -67,7 +68,8 @@ export class RepEventsService {
             type,
             payload,
             github_id: userEventId,
-            rep_id: rep.id
+            rep_id: rep.id,
+            created_at: createdAt
           });
 
           userEvents[userEventId] = userEvent;

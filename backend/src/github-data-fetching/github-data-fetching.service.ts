@@ -20,12 +20,13 @@ export class GithubDataFetchingService {
     this.clientSecret = this.ConfigService.get("GITHUB_CLIENT_SECRET");
   }
 
-  async requestAccessToken(code: string): Promise<string | HttpException> {
+  async requestAccessToken(code: string): Promise<string> {
     const result = await axios.post(this.ConfigService.get("GET_ACCESS_TOKEN_URL"), {
-      code: "code",
-      client_id: this.clientId,
-      client_secret: this.clientSecret
-    });
+        code,
+        client_id: this.clientId,
+        client_secret: this.clientSecret
+      });
+
     const accessToken = new URLSearchParams(result.data).get("access_token");
 
     if (accessToken) {
