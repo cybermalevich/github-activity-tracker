@@ -11,9 +11,17 @@ export class UsersController {
   }
 
   @UseGuards(AuthGuard("jwt"))
+  @Get('/')
+  async getUser(@Request() req) {
+    const user = req.user;
+
+    return await this.EntityManager.findOne(User, user.id);
+  }
+
+  @UseGuards(AuthGuard("jwt"))
   @Get("/reps")
   async getRepsWithUserActivity(@Request() req) {
-    const userId = req.user.username;
+    const userId = req.user.id;
     const user = await this.EntityManager.findOne(User, {
       where: {
         id: userId
@@ -21,17 +29,5 @@ export class UsersController {
     });
 
     return user.reps;
-  }
-
-  @UseGuards(AuthGuard("jwt"))
-  @Get("/activity")
-  async getUserActivity(@Request() req) {
-    const userId = req.user.username;
-
-    return await this.EntityManager.find(UserEvent, {
-      where: {
-        user_id: userId
-      }
-    });
   }
 }

@@ -15,7 +15,7 @@ export class UsersService {
   ) {
   }
 
-  async createAndSaveUser(user: BaseUser): Promise<HttpException | User> {
+  async createAndSaveUser(user: BaseUser): Promise<User> {
     const { access_token: accessToken } = await this.AuthService.login({
       id: user.id,
       githubId: user.github_id
@@ -24,10 +24,14 @@ export class UsersService {
       USERNAME: user.id
     });
 
-    return await this.EntityManager.save(this.EntityManager.create(User, {
+    const preparedUser = this.EntityManager.create(User, {
       ...user,
       access_token: accessToken,
       profile_url: profileUrl
-    }));
+    });
+
+    await this.EntityManager.save(preparedUser);
+
+    return preparedUser;
   }
 }

@@ -4,12 +4,13 @@ import { AuthService } from "./auth.service";
 import { PassportModule } from "@nestjs/passport";
 import { JwtModule, JwtService } from "@nestjs/jwt";
 import { JwtStrategy } from "./jwt.strategy";
+import { jwtConfig } from "./constants";
 
 @Module({
   imports: [
     PassportModule,
     JwtModule.register({
-      secret: "test"
+      secret: jwtConfig.jwtSecret
     })
   ],
   controllers: [AuthController],

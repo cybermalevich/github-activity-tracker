@@ -16,6 +16,9 @@ export class UserEvent {
   @Column({ type: "jsonb" })
   payload: string;
 
+  @Column({ type: "timestamp with time zone" })
+  created_at: string;
+
   @Column({ nullable: true })
   user_id: string;
 

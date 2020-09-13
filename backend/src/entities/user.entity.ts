@@ -42,9 +42,7 @@ export class User {
   @OneToMany(type => RepUser, repUser => repUser.user)
   repsUsers: RepUser[];
 
-  @OneToMany(type => UserEvent, userEvent => userEvent.user, {
-    eager: true
-  })
+  @OneToMany(type => UserEvent, userEvent => userEvent.user)
   userEvents: UserEvent[];
 
   @ManyToMany(type => Rep, rep => rep.users, {
