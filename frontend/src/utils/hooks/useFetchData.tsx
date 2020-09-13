@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import axios, {AxiosRequestConfig, Method} from 'axios';
 
-export default function useFetchData(initialConfig: AxiosRequestConfig) {
-    const [data, setData] = useState<object | null>(null);
+export default function useFetchData<T>(initialConfig: AxiosRequestConfig) {
+    const [data, setData] = useState<T | null>(null);
     const [config, setConfig] = useState(initialConfig);
     const [isError, setIsError] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -27,8 +27,7 @@ export default function useFetchData(initialConfig: AxiosRequestConfig) {
         };
 
         fetchData();
-    }, [config.url, config.method, config.data]);
+    }, [config]);
 
-    console.log({data, isLoading, isError}, setConfig);
     return [{data, isLoading, isError}, setConfig] as const;
 }
