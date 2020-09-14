@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React  from "react";
 import { Paper, Grid, Typography, List, ListItem, ListItemIcon } from "@material-ui/core";
 
 import useStyles from "./styles";
@@ -18,7 +18,6 @@ interface RepUsersDto {
 }
 
 function getRepUsersList(users: IUser[], repId: string) {
-  console.log(users);
   return users.map(({ id: userId, name: userName }) => {
     const url = `/reps/${repId}/user/${userId}`;
 
@@ -35,8 +34,8 @@ function getRepUsersList(users: IUser[], repId: string) {
 const RepUsersList: React.FC = () => {
   const classes = useStyles();
   const { id: repId } = useParams();
-  const [{ access_token: accessToken }, setCookie] = useCookies(["access_token"]);
-  const [{ data, isLoading, isError }, setConfig] = useFetchData<RepUsersDto>({
+  const [{ access_token: accessToken }] = useCookies(["access_token"]);
+  const [{ data }] = useFetchData<RepUsersDto>({
     url: generateUrl(repUsersApiUrl, {
       ID: repId
     }),

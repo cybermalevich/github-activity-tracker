@@ -13,7 +13,8 @@ const useStyles = makeStyles((theme) => ({
     flexGrow: 1
   },
   container: {
-    height: "100%"
+    height: "100%",
+    display: 'flex'
   },
   large: {
     cursor: "pointer",

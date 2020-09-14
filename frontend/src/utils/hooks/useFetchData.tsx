@@ -1,5 +1,5 @@
-import React, {useEffect, useState} from 'react';
-import axios, {AxiosRequestConfig, Method} from 'axios';
+import {useEffect, useState} from 'react';
+import axios, {AxiosRequestConfig} from 'axios';
 
 export default function useFetchData<T>(initialConfig: AxiosRequestConfig) {
     const [data, setData] = useState<T | null>(null);
