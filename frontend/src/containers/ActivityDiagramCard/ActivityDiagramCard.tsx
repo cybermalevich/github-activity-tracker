@@ -1,13 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import useFetchData from "../../utils/hooks/useFetchData";
 import { useCookies } from "react-cookie";
-import { Grid, List, ListItem, ListItemIcon, ListItemText, Paper, Typography } from "@material-ui/core";
+import { Grid, Paper, Typography } from "@material-ui/core";
 import useStyles from "./styles";
 import generateUrl from "../../utils/generateUrl";
 import { useParams } from "react-router";
 import ActivityDiagram from "../../components/ActivityDiagram/ActivityDiagram";
 import { IActivityDiagramConfig, IActivityDiagramConfigValue } from "../../utils/interfaces/IActivityDiagramConfig";
-import { start } from "repl";
+import RadarChart from "../../components/RadarChart/RadarChart";
+import IRadarChartSeries from "../../utils/interfaces/IRadarChartSeries";
+import { ActivityTypes } from "../../constants/activity_types";
 
 interface Commit {
   message: string;
@@ -27,10 +29,6 @@ interface ReceivedObj {
   events: Event[];
 }
 
-function getStartOfTheDayTimestamp(date: Date) {
-  return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
-}
-
 const ActivityDiagramCard: React.FC = () => {
   const classes = useStyles();
   const [cookies] = useCookies(["access_token"]);
@@ -40,13 +38,19 @@ const ActivityDiagramCard: React.FC = () => {
     USER_ID: userId,
     REP_ID: repId
   });
-  const [{ data, isLoading, isError }, setConfig] = useFetchData<ReceivedObj>({
+  const [{ data, isLoading }] = useFetchData<ReceivedObj>({
     method: "GET",
     url: userRepActivityApiUrl,
     headers: {
       Authorization: `Bearer ${accessToken}`
     }
   });
+  const radarChartSeries: IRadarChartSeries = {
+    codeReviewsQty: 0,
+    issuesQty: 0,
+    pullRequestsQty: 0,
+    commitsQty: 0
+  };
   let activityDiagramConfig: IActivityDiagramConfig | null = null;
 
   if (data) {
@@ -59,6 +63,21 @@ const ActivityDiagramCard: React.FC = () => {
       [key: number]: Event[];
     } = {};
     for (const event of events) {
+      switch (event.type) {
+        case ActivityTypes.PullRequestEvent:
+        {
+          radarChartSeries.pullRequestsQty++;
+          break;
+        }
+        case ActivityTypes.PushEvent: {
+          radarChartSeries.commitsQty++;
+          break;
+        }
+        case ActivityTypes.IssuesEvent: {
+          radarChartSeries.issuesQty++;
+        }
+      }
+
       const date = (new Date(event.created_at));
       const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
 
@@ -76,7 +95,7 @@ const ActivityDiagramCard: React.FC = () => {
     }
 
     //  TODO: replace to separate func and replace calculations with constant
-    const timestampMonthDiff: number = (endDate.getTime() - startDate.getTime()) / (1000  * 60 * 60 * 24 * 30);
+    const timestampMonthDiff: number = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
 
     if (timestampMonthDiff < 3) {
       startDate = new Date(endDate);
@@ -100,6 +119,7 @@ const ActivityDiagramCard: React.FC = () => {
           <div>
             <ActivityDiagram config={activityDiagramConfig}/>
           </div>
+          <RadarChart series={radarChartSeries}/>
         </Paper>
       </Grid>
     )}

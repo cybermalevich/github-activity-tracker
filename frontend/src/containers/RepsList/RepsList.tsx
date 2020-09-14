@@ -1,5 +1,5 @@
-import React, { useContext, useEffect, useState } from "react";
-import { Grid, List, ListItem, ListItemIcon, ListItemText, Paper, Typography } from "@material-ui/core";
+import React, { useContext } from "react";
+import { Grid, List, ListItem, ListItemIcon, Paper, Typography } from "@material-ui/core";
 import FolderIcon from "@material-ui/icons/Folder";
 import useStyles from "./styles";
 import { Link } from "react-router-dom";
@@ -23,10 +23,10 @@ function getRepItemsList(reps: IRep[]) {
 
 const RepsList: React.FC = () => {
   const classes = useStyles();
-  const data = useContext(Context);
+  const { userData } = useContext(Context);
 
   return (<>
-    {!data.userData ? <Typography variant="h1">Loading...</Typography> : (
+    {!userData ? <Typography variant="h1">Loading...</Typography> : (
       <Grid item xs={12} className={classes.root}>
         <Paper className={classes.paper}>
           <Typography variant="h6">
@@ -34,7 +34,7 @@ const RepsList: React.FC = () => {
           </Typography>
           <div>
             <List>
-              {data && data.userData && getRepItemsList(data?.userData.reps)}
+              {userData && getRepItemsList(userData.reps)}
             </List>
           </div>
         </Paper>

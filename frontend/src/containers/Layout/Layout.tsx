@@ -1,12 +1,10 @@
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 import {
   AppBar,
-  Avatar,
   Button,
   Container,
   CssBaseline,
   IconButton,
-  Menu, MenuItem,
   Toolbar,
   Typography
 } from "@material-ui/core";
@@ -30,7 +28,6 @@ const Layout: React.FC<IProps> = ({ children }: IProps) => {
     <ThemeProvider theme={theme}>
       <div className={classes.root}>
         <CssBaseline/>
-
         <AppBar position="fixed">
           <Toolbar>
             <IconButton edge="start" className={classes.menuButton} color="inherit" aria-label="menu">

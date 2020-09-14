@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import CalendarHeatmap from "react-calendar-heatmap";
 import "./styles.css";
 import { IActivityDiagramConfig } from "../../utils/interfaces/IActivityDiagramConfig";

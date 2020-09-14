@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 import { Avatar, Menu, MenuItem } from "@material-ui/core";
 import Context from "../../context/Context";
 import useStyles from "./styles";
