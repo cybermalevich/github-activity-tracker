@@ -72,6 +72,10 @@ export class RepEventsService {
             created_at: createdAt
           });
 
+          if (!users[userId].userEvents) {
+            users[userId].userEvents = [];
+          }
+
           userEvents[userEventId] = userEvent;
           users[userId].userEvents.push(userEvent);
           rep.userEvents.push(userEvent);
